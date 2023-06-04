@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
 class TextInput extends StatefulWidget {
+  final bool operationSupport;
   final TextEditingController textEditingController;
   final String label;
   final Function(String) onSubmitted;
+
   const TextInput({
     required this.textEditingController,
     required this.label,
     required this.onSubmitted,
+    required this.operationSupport,
     super.key,
   });
 
@@ -20,7 +23,8 @@ class _TextInputState extends State<TextInput> {
   Widget build(BuildContext context) {
     return TextField(
       onSubmitted: widget.onSubmitted,
-      keyboardType: TextInputType.number,
+      keyboardType:
+          widget.operationSupport ? TextInputType.text : TextInputType.number,
       decoration: InputDecoration(
         label: Text(
           widget.label,

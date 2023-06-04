@@ -140,6 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
             TextInput(
+              operationSupport: _supportOperations,
               onSubmitted: (_) => _calculateBudget(),
               textEditingController: textEditingController,
               label: "Total uang anda",
