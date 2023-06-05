@@ -67,11 +67,11 @@ class _MyHomePageState extends State<MyHomePage> {
         1; // hanya bisa tepat apabila dilakukan jam 12 pas
     try {
       if (_supportOperations) {
-        int parsedValue = _parser
+        double parsedValue = _parser
             .parse(textEditingController.text)
             .evaluate(EvaluationType.REAL, _contextModel);
         setState(() {
-          textEditingController.text = parsedValue.toString();
+          textEditingController.text = parsedValue.toInt().toString();
         });
       }
       _budgetHarian =
@@ -119,6 +119,16 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             const Text(
               "Masukkan uang anda hehehee :), btw inputnya support operasi matematika ya contoh: 100+750-20, tapi kamu harus centang dulu apakah mau support operasi, akan muncul tombol submit atau tekan enter agar operasi diproses",
+                textAlign: TextAlign.center,
+            ),
+            const SizedBox(
+              height: 13,
+            ),
+            const Text(
+              "Untuk hasil pecahan kita bulatkan kak :)",
+            ),
+            const SizedBox(
+              height: 13,
             ),
             const Text(
               "Asumsi gajian tanggal 25 yaa :)",
