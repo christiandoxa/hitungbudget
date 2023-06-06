@@ -41,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final Parser _parser = Parser();
   final ContextModel _contextModel = ContextModel();
   double _budgetHarian = 0;
+  double _budgetEsokHari = 0;
   String _textResult = "";
   bool _supportOperations = false;
 
@@ -74,9 +75,11 @@ class _MyHomePageState extends State<MyHomePage> {
           textEditingController.text = parsedValue.toInt().toString();
         });
       }
-      _budgetHarian =
-          int.parse(textEditingController.text) / sisaHariMenujuGajian;
-      _textResult = "Budget harian sampai gajian ${_budgetHarian.toInt()}";
+      _budgetHarian = int.parse(textEditingController.text) / sisaHariMenujuGajian;
+      int esokHari = sisaHariMenujuGajian - 1;
+      _budgetEsokHari = _budgetHarian;
+      if (esokHari > 0) _budgetEsokHari = int.parse(textEditingController.text) / esokHari;
+      _textResult = "Budget hari ini sampai gajian ${_budgetHarian.toInt()}, budget esok hari ${_budgetEsokHari.toInt()}";
     } catch (_) {
       if (textEditingController.text.isEmpty) {
         _textResult = _selamatDatang;
@@ -91,6 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       textEditingController.clear();
       _budgetHarian = 0;
+      _budgetEsokHari = 0;
       _textResult = _selamatDatang;
     });
   }
