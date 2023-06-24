@@ -45,10 +45,21 @@ class _MyHomePageState extends State<MyHomePage> {
   String _textResult = "";
   bool _supportOperations = false;
 
+  String tanggalGajianString(int bulanGajian) {
+    return '25-$bulanGajian-${today.year}';
+  }
+
   _MyHomePageState() {
     _textResult = _selamatDatang;
-    tanggalGajian = dateFormat.parse(
-        '25-${today.day < 25 ? today.month : today.month + 1}-${today.year}');
+    int bulanGajian = today.day < 25 ? today.month : today.month + 1;
+    String tanggalGajianText = tanggalGajianString(bulanGajian);
+    tanggalGajian = dateFormat.parse(tanggalGajianText);
+    if (today.day < 25 &&
+        (tanggalGajian.weekday == DateTime.sunday ||
+            tanggalGajian.weekday == DateTime.saturday)) {
+      bulanGajian = today.month + 1;
+      tanggalGajian = dateFormat.parse(tanggalGajianString(bulanGajian));
+    }
   }
 
   @override
@@ -75,11 +86,14 @@ class _MyHomePageState extends State<MyHomePage> {
           textEditingController.text = parsedValue.toInt().toString();
         });
       }
-      _budgetHarian = int.parse(textEditingController.text) / sisaHariMenujuGajian;
+      _budgetHarian =
+          int.parse(textEditingController.text) / sisaHariMenujuGajian;
       int esokHari = sisaHariMenujuGajian - 1;
       _budgetEsokHari = _budgetHarian;
-      if (esokHari > 0) _budgetEsokHari = int.parse(textEditingController.text) / esokHari;
-      _textResult = "Budget hari ini sampai gajian ${_budgetHarian.toInt()}, budget esok hari ${_budgetEsokHari.toInt()}";
+      if (esokHari > 0)
+        _budgetEsokHari = int.parse(textEditingController.text) / esokHari;
+      _textResult =
+          "Budget hari ini sampai gajian ${_budgetHarian.toInt()}, budget esok hari ${_budgetEsokHari.toInt()}";
     } catch (_) {
       if (textEditingController.text.isEmpty) {
         _textResult = _selamatDatang;
@@ -123,19 +137,21 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             const Text(
               "Masukkan uang anda hehehee :), btw inputnya support operasi matematika ya contoh: 100+750-20, tapi kamu harus centang dulu apakah mau support operasi, akan muncul tombol submit atau tekan enter agar operasi diproses",
-                textAlign: TextAlign.center,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(
               height: 13,
             ),
             const Text(
               "Untuk hasil pecahan kita bulatkan kak :)",
+              textAlign: TextAlign.center,
             ),
             const SizedBox(
               height: 13,
             ),
             const Text(
-              "Asumsi gajian tanggal 25 yaa :)",
+              "Asumsi gajian tanggal 25, kalau tanggal 25 hari libur, gajian dimajukan ke tanggal hari kerja terdekat sebelumnya yaa :)",
+              textAlign: TextAlign.center,
             ),
             const SizedBox(
               height: 13,
@@ -149,6 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const Flexible(
                   child: Text(
                     "Support operasi",
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],
@@ -183,6 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               _textResult,
               style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center,
             ),
           ],
         ),
