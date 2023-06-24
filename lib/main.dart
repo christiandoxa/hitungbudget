@@ -90,10 +90,11 @@ class _MyHomePageState extends State<MyHomePage> {
           int.parse(textEditingController.text) / sisaHariMenujuGajian;
       int esokHari = sisaHariMenujuGajian - 1;
       _budgetEsokHari = _budgetHarian;
-      if (esokHari > 0)
+      if (esokHari > 0) {
         _budgetEsokHari = int.parse(textEditingController.text) / esokHari;
+      }
       _textResult =
-          "Budget hari ini sampai gajian ${_budgetHarian.toInt()}, budget esok hari ${_budgetEsokHari.toInt()}";
+          "Budget hari ini sampai gajian ${_budgetHarian.toInt()}, budget esok hari ${_budgetEsokHari.toInt()} apabila budget hari ini tidak digunakan :D";
     } catch (_) {
       if (textEditingController.text.isEmpty) {
         _textResult = _selamatDatang;
