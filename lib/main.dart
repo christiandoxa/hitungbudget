@@ -54,9 +54,9 @@ class _MyHomePageState extends State<MyHomePage> {
     int bulanGajian = today.day < 25 ? today.month : today.month + 1;
     String tanggalGajianText = tanggalGajianString(bulanGajian);
     tanggalGajian = dateFormat.parse(tanggalGajianText);
-    if (today.day > 22 && today.day < 25 &&
-        (tanggalGajian.weekday == DateTime.sunday ||
-            tanggalGajian.weekday == DateTime.saturday)) {
+    // paycheck during holidays
+    if ((today.day == 23 && tanggalGajian.weekday == DateTime.sunday) ||
+        (today.day == 24 && tanggalGajian.weekday == DateTime.saturday)) {
       bulanGajian = today.month + 1;
       tanggalGajian = dateFormat.parse(tanggalGajianString(bulanGajian));
     }
