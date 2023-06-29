@@ -1,7 +1,10 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hitungbudget/text_input.dart';
 import 'package:intl/intl.dart';
 import 'package:math_expressions/math_expressions.dart';
+import 'package:http/http.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,32 +37,48 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController textEditingController = TextEditingController();
-  final DateFormat dateFormat = DateFormat("dd-MM-yyyy");
-  final DateTime today = DateTime.now();
+  final DateFormat dateFormat = DateFormat("yyyy-MM-dd");
+  late DateTime today;
   late DateTime tanggalGajian;
   final String _selamatDatang = "Selamat datang di penghitung budget :)";
   final Parser _parser = Parser();
   final ContextModel _contextModel = ContextModel();
+  final Client _client = Client();
+  Map<String, dynamic> holidayData = {};
   double _budgetHarian = 0;
   double _budgetEsokHari = 0;
   String _textResult = "";
   bool _supportOperations = false;
+  bool _isAlreadyNextMonth = false;
 
-  String tanggalGajianString(int bulanGajian) {
-    return '25-$bulanGajian-${today.year}';
+  String dateFormatHelper(String date) {
+    if (date.length < 2) return "0$date";
+    return date;
+  }
+
+  String tanggalGajianString({String? bulanGajian, String hariGajian = "25"}) {
+    String defaultBulanGajian =
+        today.day < 25 ? today.month.toString() : (today.month + 1).toString();
+    String bulan = bulanGajian ?? defaultBulanGajian;
+    bulan = dateFormatHelper(bulan);
+    hariGajian = dateFormatHelper(hariGajian);
+    return '${today.year}-$bulan-$hariGajian';
   }
 
   _MyHomePageState() {
+    var now = DateTime.now();
+    today = dateFormat.parse("${now.year}-${dateFormatHelper(now.month.toString())}-${dateFormatHelper(now.day.toString())}");
     _textResult = _selamatDatang;
-    int bulanGajian = today.day < 25 ? today.month : today.month + 1;
-    String tanggalGajianText = tanggalGajianString(bulanGajian);
-    tanggalGajian = dateFormat.parse(tanggalGajianText);
-    // paycheck during holidays
-    if ((today.day == 23 && tanggalGajian.weekday == DateTime.sunday) ||
-        (today.day == 24 && tanggalGajian.weekday == DateTime.saturday)) {
-      bulanGajian = today.month + 1;
-      tanggalGajian = dateFormat.parse(tanggalGajianString(bulanGajian));
-    }
+    _textResult = "Mohon tunggu ... :)";
+    fetchHolidays(_client)
+        .then((value) => _handleResponse(value))
+        .onError((error, stackTrace) => _handleError(error, stackTrace));
+  }
+
+  Future<Response> fetchHolidays(Client client) async {
+    return client.get(Uri.parse(
+      'https://raw.githubusercontent.com/guangrei/APIHariLibur_V2/main/calendar.min.json',
+    ));
   }
 
   @override
@@ -75,8 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _calculateBudget() {
-    int sisaHariMenujuGajian = (tanggalGajian.difference(today)).inDays +
-        1; // hanya bisa tepat apabila dilakukan jam 12 pas
+    int sisaHariMenujuGajian = (tanggalGajian.difference(today)).inDays;
     try {
       if (_supportOperations) {
         double parsedValue = _parser
@@ -123,6 +141,79 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _onPressedButton() {
     _calculateBudget();
+  }
+
+  bool checkWeekend(int weekDay) {
+    return weekDay == DateTime.saturday || weekDay == DateTime.sunday;
+  }
+
+  _handleResponse(Response response) {
+    setState(() {
+      _textResult = _selamatDatang;
+    });
+    holidayData = json.decode(response.body);
+    findPaydayDate();
+  }
+
+  void findPaydayDate() {
+    String tanggalGajianText = _isAlreadyNextMonth
+        ? tanggalGajianString(bulanGajian: (today.month + 1).toString())
+        : tanggalGajianString();
+    int hariGajian = dateFormat.parse(tanggalGajianText).day;
+    bool isHoliday = holidayData[tanggalGajianText]?["holiday"] ?? false;
+    bool loopPerformed = false;
+    while (isHoliday) {
+      if (!loopPerformed) loopPerformed = true;
+      hariGajian--;
+      String tanggalGajianLoop = _isAlreadyNextMonth
+          ? tanggalGajianString(
+              bulanGajian: (today.month + 1).toString(),
+              hariGajian: hariGajian.toString())
+          : tanggalGajianString(hariGajian: hariGajian.toString());
+      isHoliday = holidayData[tanggalGajianLoop]?["holiday"] ?? false;
+      if (!isHoliday) {
+        int weekDayLoop = dateFormat.parse(tanggalGajianLoop).weekday;
+        isHoliday = checkWeekend(weekDayLoop);
+      }
+    }
+    // check weekend if loop is not performed
+    if (!loopPerformed) {
+      int weekDay = _isAlreadyNextMonth
+          ? dateFormat
+              .parse(tanggalGajianString(
+                  bulanGajian: (today.month + 1).toString(),
+                  hariGajian: hariGajian.toString()))
+              .weekday
+          : dateFormat
+              .parse(tanggalGajianString(hariGajian: hariGajian.toString()))
+              .weekday;
+      if (weekDay == DateTime.sunday) hariGajian -= 2;
+      if (weekDay == DateTime.saturday) hariGajian--;
+    }
+    tanggalGajian = _isAlreadyNextMonth
+        ? tanggalGajian = dateFormat.parse(tanggalGajianString(
+            bulanGajian: (today.month + 1).toString(),
+            hariGajian: hariGajian.toString()))
+        : dateFormat
+            .parse(tanggalGajianString(hariGajian: hariGajian.toString()));
+    if (today.day >= tanggalGajian.day && !_isAlreadyNextMonth) {
+      _isAlreadyNextMonth = true;
+      findPaydayDate();
+    }
+  }
+
+  _handleError(Object? error, StackTrace stackTrace) {
+    if (error != null) {
+      if (kDebugMode) {
+        print(error.toString());
+      }
+    }
+    if (kDebugMode) {
+      print(stackTrace.toString());
+    }
+    setState(() {
+      _textResult = "Error mendapatkan data hari libur :(";
+    });
   }
 
   @override
