@@ -49,7 +49,6 @@ class _MyHomePageState extends State<MyHomePage> {
   double _budgetEsokHari = 0;
   String _textResult = "";
   bool _supportOperations = false;
-  bool _isAlreadyNextMonth = false;
 
   String dateFormatHelper(String date) {
     if (date.length < 2) return "0$date";
@@ -67,7 +66,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _MyHomePageState() {
     var now = DateTime.now();
-    today = dateFormat.parse("${now.year}-${dateFormatHelper(now.month.toString())}-${dateFormatHelper(now.day.toString())}");
+    today = dateFormat.parse(
+        "${now.year}-${dateFormatHelper(now.month.toString())}-${dateFormatHelper(now.day.toString())}");
     _textResult = _selamatDatang;
     _textResult = "Mohon tunggu ... :)";
     fetchHolidays(_client)
@@ -155,21 +155,16 @@ class _MyHomePageState extends State<MyHomePage> {
     findPaydayDate();
   }
 
-  void findPaydayDate() {
-    String tanggalGajianText = _isAlreadyNextMonth
-        ? tanggalGajianString(bulanGajian: (today.month + 1).toString())
-        : tanggalGajianString();
+  void findPaydayDate([String? bulanGajian, bool isAlreadyNextMonth = false]) {
+    String tanggalGajianText = tanggalGajianString(bulanGajian: bulanGajian);
     int hariGajian = dateFormat.parse(tanggalGajianText).day;
     bool isHoliday = holidayData[tanggalGajianText]?["holiday"] ?? false;
     bool loopPerformed = false;
     while (isHoliday) {
       if (!loopPerformed) loopPerformed = true;
       hariGajian--;
-      String tanggalGajianLoop = _isAlreadyNextMonth
-          ? tanggalGajianString(
-              bulanGajian: (today.month + 1).toString(),
-              hariGajian: hariGajian.toString())
-          : tanggalGajianString(hariGajian: hariGajian.toString());
+      String tanggalGajianLoop = tanggalGajianString(
+          bulanGajian: bulanGajian, hariGajian: hariGajian.toString());
       isHoliday = holidayData[tanggalGajianLoop]?["holiday"] ?? false;
       if (!isHoliday) {
         int weekDayLoop = dateFormat.parse(tanggalGajianLoop).weekday;
@@ -178,27 +173,17 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     // check weekend if loop is not performed
     if (!loopPerformed) {
-      int weekDay = _isAlreadyNextMonth
-          ? dateFormat
-              .parse(tanggalGajianString(
-                  bulanGajian: (today.month + 1).toString(),
-                  hariGajian: hariGajian.toString()))
-              .weekday
-          : dateFormat
-              .parse(tanggalGajianString(hariGajian: hariGajian.toString()))
-              .weekday;
+      int weekDay = dateFormat
+          .parse(tanggalGajianString(
+              bulanGajian: bulanGajian, hariGajian: hariGajian.toString()))
+          .weekday;
       if (weekDay == DateTime.sunday) hariGajian -= 2;
       if (weekDay == DateTime.saturday) hariGajian--;
     }
-    tanggalGajian = _isAlreadyNextMonth
-        ? tanggalGajian = dateFormat.parse(tanggalGajianString(
-            bulanGajian: (today.month + 1).toString(),
-            hariGajian: hariGajian.toString()))
-        : dateFormat
-            .parse(tanggalGajianString(hariGajian: hariGajian.toString()));
-    if (today.day >= tanggalGajian.day && !_isAlreadyNextMonth) {
-      _isAlreadyNextMonth = true;
-      findPaydayDate();
+    tanggalGajian = dateFormat.parse(tanggalGajianString(
+        bulanGajian: bulanGajian, hariGajian: hariGajian.toString()));
+    if (today.day >= tanggalGajian.day && !isAlreadyNextMonth) {
+      findPaydayDate((today.month + 1).toString(), true);
     }
   }
 
